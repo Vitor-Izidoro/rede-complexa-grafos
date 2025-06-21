@@ -1,0 +1,4 @@
+
+--- COMPONENTES CONEXAS ---
+Grafo de Atores: 1648 componentes conexas
+Grafo Direcional: 56208 componentes fortemente conexas
