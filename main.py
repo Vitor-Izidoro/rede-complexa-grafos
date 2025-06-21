@@ -8,10 +8,7 @@ from algoritmos import (
     agm_prim,
     degree_centrality,
     betweenness_centrality,
-    closeness_centrality,
-    grau_normalizado,
-    betweenness_normalizado,
-    closeness_normalizado
+    closeness_centrality
 )
 
 # ========== UTILITÁRIOS ==========
@@ -123,45 +120,40 @@ def executar_opcao(opcao, grafo_atores, grafo_direcional):
 
     elif opcao == "4":
         conteudo += "\n--- CENTRALIDADE DE GRAU - ATORES ---\n"
-        graus = degree_centrality(grafo_atores)
-        for v, g in sorted(graus.items(), key=lambda x: -x[1])[:10]:
-            norm = grau_normalizado(grafo_atores, v)
+        graus = degree_centrality(grafo_atores, normalizar=True)
+        for v, (g, norm) in sorted(graus.items(), key=lambda x: -x[1][0])[:10]:
             conteudo += f"{v}: {g} (normalizado: {norm:.4f})\n"
 
     elif opcao == "5":
         conteudo += "\n--- CENTRALIDADE DE INTERMEDIAÇÃO - ATORES ---\n"
-        centralidade = betweenness_centrality(grafo_atores)
-        for v, c in sorted(centralidade.items(), key=lambda x: -x[1])[:10]:
-            norm = betweenness_normalizado(grafo_atores, v)
+        centralidade = betweenness_centrality(grafo_atores, normalizar=True)
+        for v, (c, norm) in sorted(centralidade.items(), key=lambda x: -x[1][0])[:10]:
             conteudo += f"{v}: {c:.4f} (normalizado: {norm:.4f})\n"
 
     elif opcao == "6":
         conteudo += "\n--- CENTRALIDADE DE PROXIMIDADE - ATORES ---\n"
-        centralidade = closeness_centrality(grafo_atores)
-        for v, c in sorted(centralidade.items(), key=lambda x: -x[1])[:10]:
-            norm = closeness_normalizado(grafo_atores, v)
+        centralidade = closeness_centrality(grafo_atores, normalizar=True)
+        for v, (c, norm) in sorted(centralidade.items(), key=lambda x: -x[1][0])[:10]:
             conteudo += f"{v}: {c:.4f} (normalizado: {norm:.4f})\n"
 
     elif opcao == "7":
         conteudo += "\n--- CENTRALIDADE DE GRAU - DIRETORES ---\n"
-        graus = degree_centrality(grafo_direcional, mode="in")
-        for v, g in sorted(graus.items(), key=lambda x: -x[1])[:10]:
-            norm = grau_normalizado(grafo_direcional, v, mode="in")
+        graus = degree_centrality(grafo_direcional, mode="in", normalizar=True)
+        for v, (g, norm) in sorted(graus.items(), key=lambda x: -x[1][0])[:10]:
             conteudo += f"{v}: {g} (normalizado: {norm:.4f})\n"
 
     elif opcao == "8":
         conteudo += "\n--- CENTRALIDADE DE INTERMEDIAÇÃO - DIRETORES ---\n"
-        centralidade = betweenness_centrality(grafo_direcional)
-        for v, c in sorted(centralidade.items(), key=lambda x: -x[1])[:10]:
-            norm = betweenness_normalizado(grafo_direcional, v)
+        centralidade = betweenness_centrality(grafo_direcional, normalizar=True)
+        for v, (c, norm) in sorted(centralidade.items(), key=lambda x: -x[1][0])[:10]:
             conteudo += f"{v}: {c:.4f} (normalizado: {norm:.4f})\n"
 
     elif opcao == "9":
         conteudo += "\n--- CENTRALIDADE DE PROXIMIDADE - DIRETORES ---\n"
-        centralidade = closeness_centrality(grafo_direcional)
-        for v, c in sorted(centralidade.items(), key=lambda x: -x[1])[:10]:
-            norm = closeness_normalizado(grafo_direcional, v)
+        centralidade = closeness_centrality(grafo_direcional, normalizar=True)
+        for v, (c, norm) in sorted(centralidade.items(), key=lambda x: -x[1][0])[:10]:
             conteudo += f"{v}: {c:.4f} (normalizado: {norm:.4f})\n"
+
 
     elif opcao == "0":
         print("Saindo do programa... Até mais!")

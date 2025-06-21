@@ -99,10 +99,10 @@ def agm_prim(grafo, inicio):
     return agm, custo_total
 
 # ========== CENTRALIDADE DE GRAU ==========
-
-def degree_centrality(grafo, mode="total"):
+def degree_centrality(grafo, mode="total", normalizar=False):
     centralidade = {}
     total, cont = len(grafo.vertices), 0
+    n = len(grafo.vertices)
 
     for v in grafo.vertices:
         cont += 1
@@ -110,24 +110,27 @@ def degree_centrality(grafo, mode="total"):
 
         if grafo.direcionado:
             if mode == "in":
-                centralidade[v] = sum(1 for u in grafo.vertices for w, _ in grafo.lista_adj.get(u, []) if w == v)
+                grau = sum(1 for u in grafo.vertices for w, _ in grafo.lista_adj.get(u, []) if w == v)
             elif mode == "out":
-                centralidade[v] = len(grafo.lista_adj.get(v, []))
+                grau = len(grafo.lista_adj.get(v, []))
             else:
                 in_degree = sum(1 for u in grafo.vertices for w, _ in grafo.lista_adj.get(u, []) if w == v)
                 out_degree = len(grafo.lista_adj.get(v, []))
-                centralidade[v] = in_degree + out_degree
+                grau = in_degree + out_degree
         else:
-            centralidade[v] = len(grafo.lista_adj.get(v, []))
+            grau = len(grafo.lista_adj.get(v, []))
+
+        norm = grau / (n - 1) if normalizar and n > 1 else grau
+        centralidade[v] = (grau, norm)
 
     print(" " * 50, end='\r')
     return centralidade
 
-# ========== CENTRALIDADE DE INTERMEDIAÇÃO ==========
 
-def betweenness_centrality(grafo):
+def betweenness_centrality(grafo, normalizar=False):
     centralidade = defaultdict(float)
     total, cont = len(grafo.vertices), 0
+    n = len(grafo.vertices)
 
     for s in grafo.vertices:
         cont += 1
@@ -160,15 +163,25 @@ def betweenness_centrality(grafo):
                 centralidade[w] += delta[w]
 
     print(" " * 50, end='\r')
+
     for v in centralidade:
         centralidade[v] /= 2
-    return dict(centralidade)
 
-# ========== CENTRALIDADE DE PROXIMIDADE ==========
+    resultado = {}
+    for v, valor in centralidade.items():
+        if normalizar and n > 2:
+            norm = (1 / ((n - 1) * (n - 2))) if grafo.direcionado else (2 / ((n - 1) * (n - 2)))
+            resultado[v] = (valor, valor * norm)
+        else:
+            resultado[v] = (valor, valor)
 
-def closeness_centrality(grafo):
+    return resultado
+
+
+def closeness_centrality(grafo, normalizar=False):
     centralidade = {}
     total, cont = len(grafo.vertices), 0
+    n = len(grafo.vertices)
 
     for v in grafo.vertices:
         cont += 1
@@ -185,30 +198,12 @@ def closeness_centrality(grafo):
                     fila.append(w)
 
         if len(dist) > 1:
-            centralidade[v] = (len(dist) - 1) / sum(dist.values())
+            valor = (len(dist) - 1) / sum(dist.values())
         else:
-            centralidade[v] = 0
+            valor = 0.0
+
+        norm = valor * (n - 1) if normalizar and n > 1 else valor
+        centralidade[v] = (valor, norm)
 
     print(" " * 50, end='\r')
     return centralidade
-
-# ========== CENTRALIDADES NORMALIZADAS ==========
-
-def grau_normalizado(grafo, vertice, mode="total"):
-    graus = degree_centrality(grafo, mode)
-    n = len(grafo.vertices)
-    if n <= 1 or vertice not in graus:
-        return 0.0
-    return graus[vertice] / (n - 1)
-
-def betweenness_normalizado(grafo, vertice):
-    centralidade = betweenness_centrality(grafo)
-    n = len(grafo.vertices)
-    if n <= 2 or vertice not in centralidade:
-        return 0.0
-    norm = (1 / ((n - 1) * (n - 2))) if grafo.direcionado else (2 / ((n - 1) * (n - 2)))
-    return centralidade[vertice] * norm
-
-def closeness_normalizado(grafo, vertice):
-    centralidade = closeness_centrality(grafo)
-    return centralidade.get(vertice, 0.0)
