@@ -107,7 +107,7 @@ def agm_prim(grafo, inicio):
 
 
 def degree_centrality(grafo, mode="total"):
-    print("Calculando centralidade de grau...")
+    # print("Calculando centralidade de grau...")
     centralidade = {}
     total = len(grafo.vertices)
     cont = 0
@@ -128,12 +128,12 @@ def degree_centrality(grafo, mode="total"):
             centralidade[v] = len(grafo.lista_adj.get(v, []))
 
     print(" " * 50, end='\r')
-    print("Centralidade de grau calculada.")
+    #print("Centralidade de grau calculada.")
     return centralidade
 
 
 def betweenness_centrality(grafo):
-    print("Calculando centralidade de intermediação (betweenness)...")
+    #print("Calculando centralidade de intermediação (betweenness)...")
     centralidade = defaultdict(float)
     total = len(grafo.vertices)
     cont = 0
@@ -172,12 +172,12 @@ def betweenness_centrality(grafo):
     print(" " * 50, end='\r')
     for v in centralidade:
         centralidade[v] /= 2
-    print("Centralidade de intermediação calculada.")
+    #print("Centralidade de intermediação calculada.")
     return dict(centralidade)
 
 
 def closeness_centrality(grafo):
-    print("Calculando centralidade de proximidade...")
+    #print("Calculando centralidade de proximidade...")
     centralidade = {}
     total = len(grafo.vertices)
     cont = 0
@@ -202,5 +202,30 @@ def closeness_centrality(grafo):
             centralidade[v] = 0
 
     print(" " * 50, end='\r')
-    print("Centralidade de proximidade calculada.")
+    #print("Centralidade de proximidade calculada.")
     return centralidade
+
+def grau_normalizado(grafo, vertice, mode="total"):
+    """Retorna a centralidade de grau normalizada (0 a 1) de um vértice."""
+    graus = degree_centrality(grafo, mode)
+    n = len(grafo.vertices)
+    if n <= 1 or vertice not in graus:
+        return 0.0
+    return graus[vertice] / (n - 1)
+
+def betweenness_normalizado(grafo, vertice):
+    """Retorna a centralidade de intermediação normalizada (0 a 1) de um vértice."""
+    centralidade = betweenness_centrality(grafo)
+    n = len(grafo.vertices)
+    if n <= 2 or vertice not in centralidade:
+        return 0.0
+    if grafo.direcionado:
+        norm = 1 / ((n - 1) * (n - 2))
+    else:
+        norm = 2 / ((n - 1) * (n - 2))
+    return centralidade[vertice] * norm
+
+def closeness_normalizado(grafo, vertice):
+    """Retorna a centralidade de proximidade normalizada (0 a 1) de um vértice."""
+    centralidade = closeness_centrality(grafo)
+    return centralidade.get(vertice, 0.0)
