@@ -1,15 +1,12 @@
 
 --- CENTRALIDADE DE PROXIMIDADE - DIRETORES ---
-Top 10 diretores com maior proximidade:
-ALEX FERNS: 1.0000 (normalizado: 1.0000)
-TOM WHAM: 1.0000 (normalizado: 1.0000)
-DIEGO ACUÑA: 1.0000 (normalizado: 1.0000)
-IRAN BAKLEY: 1.0000 (normalizado: 1.0000)
-SAUL REICHLIN: 1.0000 (normalizado: 1.0000)
-JAKE SAKSON: 1.0000 (normalizado: 1.0000)
-ROSE MCIVER: 1.0000 (normalizado: 1.0000)
-KEVIN T. OLIVER: 1.0000 (normalizado: 1.0000)
-SRISHTI JAIN: 1.0000 (normalizado: 1.0000)
-LOUISIANA LOU: 1.0000 (normalizado: 1.0000)
-
-👉 A centralidade de proximidade mostra os diretores mais próximos de todos os outros na rede.
+NICK ROUX: 1.0000 (normalizado: 56252.0000)
+M. ILAVARASU: 1.0000 (normalizado: 56252.0000)
+ILAMARIA EBRAHIM: 1.0000 (normalizado: 56252.0000)
+THERON JOHNSON: 1.0000 (normalizado: 56252.0000)
+JAMAL "GRAVY" WOOLARD: 1.0000 (normalizado: 56252.0000)
+BARBARA LUDDY: 1.0000 (normalizado: 56252.0000)
+KENNY RHODES: 1.0000 (normalizado: 56252.0000)
+JULIAN VERGOV: 1.0000 (normalizado: 56252.0000)
+SONJA VUKIĆEVIĆ: 1.0000 (normalizado: 56252.0000)
+HENRY LLOYD-HUGHES: 1.0000 (normalizado: 56252.0000)

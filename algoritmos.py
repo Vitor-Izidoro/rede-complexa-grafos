@@ -197,12 +197,19 @@ def closeness_centrality(grafo, normalizar=False):
                     dist[w] = dist[u] + 1
                     fila.append(w)
 
-        if len(dist) > 1:
-            valor = (len(dist) - 1) / sum(dist.values())
+        reachable = len(dist) - 1
+        total_dist = sum(dist.values())
+
+        if reachable > 0 and total_dist > 0:
+            valor = reachable / total_dist
+            if normalizar and n > 1:
+                norm = valor * (n - 1)
+            else:
+                norm = valor
         else:
             valor = 0.0
+            norm = 0.0
 
-        norm = valor * (n - 1) if normalizar and n > 1 else valor
         centralidade[v] = (valor, norm)
 
     print(" " * 50, end='\r')
