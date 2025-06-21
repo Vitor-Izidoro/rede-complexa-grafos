@@ -1,48 +1,67 @@
+import os
 import pandas as pd
 from collections import defaultdict
 
 def carregar_dados_padronizados(caminho_arquivo):
     """
     Carrega e padroniza os dados do CSV, filtrando apenas linhas com 'cast' e 'director' válidos.
+    Versão otimizada com melhor tratamento de erros e performance.
 
     Args:
         caminho_arquivo (str): Caminho para o arquivo CSV.
 
     Returns:
         tuple: (elencos, diretores), listas de listas com atores e diretores padronizados.
+               Retorna ([], []) em caso de erro.
     """
+    # Verificação inicial do arquivo
+    if not os.path.exists(caminho_arquivo):
+        print(f"Erro: Arquivo não encontrado em {caminho_arquivo}")
+        return [], []
+    
     try:
-        df = pd.read_csv(caminho_arquivo)
+        # Carrega apenas as colunas necessárias para melhor performance
+        df = pd.read_csv(caminho_arquivo, usecols=['cast', 'director'])
     except Exception as e:
         print(f"Erro ao ler o CSV: {e}")
         return [], []
 
-    # Filtra linhas com valores não nulos em 'cast' e 'director'
-    df = df[df['cast'].notnull() & df['director'].notnull()]
-
+    # Pré-filtro: remove linhas com valores nulos
+    df.dropna(subset=['cast', 'director'], inplace=True)
     total_linhas = len(df)
+    
+    if total_linhas == 0:
+        print("Nenhum dado válido encontrado após filtrar valores nulos.")
+        return [], []
+
+    # Pré-aloca listas para melhor performance
+    elencos = []
+    diretores = []
     linhas_processadas = 0
-    elencos, diretores = [], []
 
-    for _, linha in df.iterrows():
-        elenco_raw = linha['cast']
-        diretor_raw = linha['director']
+    # Processamento em lote mais eficiente
+    for elenco_raw, diretor_raw in zip(df['cast'], df['director']):
+        try:
+            # Processamento do elenco
+            atores = [ator.strip().upper() for ator in elenco_raw.split(',') if ator.strip()]
+            if len(atores) < 2:
+                continue
 
-        # Padronizar nomes dos atores
-        atores = [ator.strip().upper() for ator in elenco_raw.split(',') if ator.strip()]
-        if len(atores) < 2:
-            continue  # Ignora se não houver pelo menos dois atores
+            # Processamento dos diretores
+            diretores_filme = [d.strip().upper() for d in diretor_raw.split(',') if d.strip()]
+            if not diretores_filme:
+                continue
 
-        # Padronizar nomes dos diretores
-        diretores_padronizados = [d.strip().upper() for d in diretor_raw.split(',') if d.strip()]
-        if not diretores_padronizados:
-            continue  # Ignora se não houver diretores válidos
+            elencos.append(atores)
+            diretores.append(diretores_filme)
+            linhas_processadas += 1
+            
+        except Exception as e:
+            print(f"Erro ao processar linha: {e}")
+            continue
 
-        elencos.append(atores)
-        diretores.append(diretores_padronizados)
-        linhas_processadas += 1
-
-    print(f"\n>>> Linhas processadas: {linhas_processadas} de {total_linhas} válidas.")
+    print(f"\n>>> Linhas processadas: {linhas_processadas} de {total_linhas} válidas "
+          f"({linhas_processadas/total_linhas:.1%} de aproveitamento)")
 
     return elencos, diretores
 

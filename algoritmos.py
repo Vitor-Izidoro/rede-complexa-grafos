@@ -28,13 +28,14 @@ def componentes_conexas(grafo):
 
             componentes.append(componente)
 
-    print(" " * 50, end='\r')  # limpa a linha
+    print(" " * 50, end='\r')
     print(f"Componentes conexas calculadas: {len(componentes)} componentes encontradas.")
     return componentes
 
 
 def componentes_fortemente_conexas(grafo):
     print("Calculando componentes fortemente conexas...")
+
     def dfs(v, visitado, pilha):
         visitado.add(v)
         for viz, _ in grafo.lista_adj.get(v, []):
@@ -53,13 +54,14 @@ def componentes_fortemente_conexas(grafo):
     pilha = []
     total = len(grafo.vertices)
     cont = 0
+
     for v in grafo.vertices:
         cont += 1
-        print(f"Componentes fortemente conexas (passagem 1): {cont}/{total} vértices processados...", end='\r', flush=True)
+        print(f"Passo 1 - DFS direto: {cont}/{total} vértices processados...", end='\r', flush=True)
         if v not in visitado:
             dfs(v, visitado, pilha)
 
-    print(" " * 50, end='\r')  # limpa a linha
+    print(" " * 50, end='\r')
 
     transposto = {}
     for u in grafo.lista_adj:
@@ -104,16 +106,28 @@ def agm_prim(grafo, inicio):
     return agm, custo_total
 
 
-def degree_centrality(grafo):
+def degree_centrality(grafo, mode="total"):
     print("Calculando centralidade de grau...")
     centralidade = {}
     total = len(grafo.vertices)
     cont = 0
+
     for v in grafo.vertices:
         cont += 1
         print(f"Centralidade de grau: {cont}/{total} vértices processados...", end='\r', flush=True)
-        centralidade[v] = len(grafo.lista_adj.get(v, []))
-    print(" " * 50, end='\r')  # limpa a linha
+        if grafo.direcionado:
+            if mode == "in":
+                centralidade[v] = sum(1 for u in grafo.vertices for w, _ in grafo.lista_adj.get(u, []) if w == v)
+            elif mode == "out":
+                centralidade[v] = len(grafo.lista_adj.get(v, []))
+            else:  # total (in + out)
+                in_degree = sum(1 for u in grafo.vertices for w, _ in grafo.lista_adj.get(u, []) if w == v)
+                out_degree = len(grafo.lista_adj.get(v, []))
+                centralidade[v] = in_degree + out_degree
+        else:
+            centralidade[v] = len(grafo.lista_adj.get(v, []))
+
+    print(" " * 50, end='\r')
     print("Centralidade de grau calculada.")
     return centralidade
 
@@ -150,11 +164,12 @@ def betweenness_centrality(grafo):
         while S:
             w = S.pop()
             for v in P[w]:
-                delta[v] += (sigma[v] / sigma[w]) * (1 + delta[w]) if sigma[w] != 0 else 0
+                if sigma[w] != 0:
+                    delta[v] += (sigma[v] / sigma[w]) * (1 + delta[w])
             if w != s:
                 centralidade[w] += delta[w]
 
-    print(" " * 50, end='\r')  # limpa a linha
+    print(" " * 50, end='\r')
     for v in centralidade:
         centralidade[v] /= 2
     print("Centralidade de intermediação calculada.")
@@ -166,22 +181,26 @@ def closeness_centrality(grafo):
     centralidade = {}
     total = len(grafo.vertices)
     cont = 0
+
     for v in grafo.vertices:
         cont += 1
         print(f"Centralidade de proximidade: {cont}/{total} vértices processados...", end='\r', flush=True)
 
         dist = {v: 0}
         fila = deque([v])
+
         while fila:
             u = fila.popleft()
             for w, _ in grafo.lista_adj.get(u, []):
                 if w not in dist:
                     dist[w] = dist[u] + 1
                     fila.append(w)
+
         if len(dist) > 1:
             centralidade[v] = (len(dist) - 1) / sum(dist.values())
         else:
             centralidade[v] = 0
-    print(" " * 50, end='\r')  # limpa a linha
+
+    print(" " * 50, end='\r')
     print("Centralidade de proximidade calculada.")
     return centralidade
