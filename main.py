@@ -1,5 +1,5 @@
-import platform
 import os
+import platform
 from collections import defaultdict
 from grafo import carregar_dados_padronizados, construir_grafo_atores, construir_grafo_direcional
 from algoritmos import (
@@ -14,28 +14,16 @@ from algoritmos import (
     closeness_normalizado
 )
 
-def limpar_terminal():
-    if platform.system() == "Windows":
-        os.system("cls")
-    else:
-        os.system("clear")
+# ========== UTILITÁRIOS ==========
 
-def mostrar_menu():
-    print("""
-        \n===== ANÁLISE DE REDES COMPLEXAS =====
-1. Informações básicas dos grafos
-2. Componentes conexas
-3. Árvore Geradora Mínima (grafo atores)
-4. Centralidade de Grau - Atores (não direcionado)
-5. Centralidade de Intermediação - Atores (não direcionado)
-6. Centralidade de Proximidade - Atores (não direcionado)
-7. Centralidade de Grau - Diretores (grafo direcionado)
-8. Centralidade de Intermediação - Diretores (grafo direcionado)
-9. Centralidade de Proximidade - Diretores (grafo direcionado)
-0. Sair
-======================================
-      """)
-    return input("Escolha uma opção: ").strip()
+def limpar_terminal():
+    os.system("cls" if platform.system() == "Windows" else "clear")
+
+def salvar_em_txt(nome_arquivo, conteudo):
+    os.makedirs("resultados", exist_ok=True)
+    caminho = os.path.join("resultados", nome_arquivo)
+    with open(caminho, "w", encoding="utf-8") as f:
+        f.write(conteudo)
 
 def imprimir_agm_completa(agm, raiz):
     adj = defaultdict(list)
@@ -43,8 +31,8 @@ def imprimir_agm_completa(agm, raiz):
         adj[u].append((v, p))
         adj[v].append((u, p))
 
-    visitado = set()
     linhas = []
+    visitado = set()
 
     def dfs(no, prefix=""):
         visitado.add(no)
@@ -56,20 +44,138 @@ def imprimir_agm_completa(agm, raiz):
             dfs(filho, prefix + ("    " if i == len(filhos) - 1 else "│   "))
 
     dfs(raiz)
-    return linhas
+    return "\n".join(linhas)
 
-def salvar_agm_completa_em_txt(agm, raiz, nome_arquivo="agm_completa.txt"):
-    linhas = imprimir_agm_completa(agm, raiz)
-    with open(nome_arquivo, "w", encoding="utf-8") as f:
-        f.write("\n".join(linhas))
-    print(f"\nÁrvore Geradora Mínima COMPLETA salva em '{nome_arquivo}'.\n")
+def salvar_agm_completa_em_txt(agm, raiz):
+    conteudo = imprimir_agm_completa(agm, raiz)
+    salvar_em_txt("agm_completa.txt", conteudo)
+    print(f"\nÁrvore Geradora Mínima COMPLETA salva em 'resultados/agm_completa.txt'\n")
 
-os.makedirs("resultados", exist_ok=True)
+# ========== MENU E EXECUÇÃO DE OPÇÕES ==========
 
-def salvar_em_txt(nome_arquivo, conteudo):
-    caminho = os.path.join("resultados", nome_arquivo)
-    with open(caminho, "w", encoding="utf-8") as f:
-        f.write(conteudo)
+def mostrar_menu():
+    print("""
+===== ANÁLISE DE REDES COMPLEXAS =====
+1. Informações básicas dos grafos
+2. Componentes conexas
+3. Árvore Geradora Mínima (grafo atores)
+4. Centralidade de Grau - Atores (não direcionado)
+5. Centralidade de Intermediação - Atores (não direcionado)
+6. Centralidade de Proximidade - Atores (não direcionado)
+7. Centralidade de Grau - Diretores (grafo direcionado)
+8. Centralidade de Intermediação - Diretores (grafo direcionado)
+9. Centralidade de Proximidade - Diretores (grafo direcionado)
+0. Sair
+======================================
+""")
+    return input("Escolha uma opção: ").strip()
+
+def executar_opcao(opcao, grafo_atores, grafo_direcional):
+    conteudo = ""
+
+    if opcao == "1":
+        v1, a1 = grafo_atores.obter_info()
+        v2, a2 = grafo_direcional.obter_info()
+        conteudo += f"\n--- INFORMAÇÕES BÁSICAS DOS GRAFOS ---\n"
+        conteudo += f"Grafo de Atores: {v1} vértices, {a1} arestas\n"
+        conteudo += f"Grafo Direcional: {v2} vértices, {a2} arestas\n"
+
+    elif opcao == "2":
+        comp_nao_dir = componentes_conexas(grafo_atores)
+        comp_dir = componentes_fortemente_conexas(grafo_direcional)
+        conteudo += f"\n--- COMPONENTES CONEXAS ---\n"
+        conteudo += f"Grafo de Atores: {len(comp_nao_dir)} componentes conexas\n"
+        conteudo += f"Grafo Direcional: {len(comp_dir)} componentes fortemente conexas\n"
+
+    elif opcao == "3":
+        conteudo += "\n--- ÁRVORE GERADORA MÍNIMA (PRIM) ---\n"
+        print("1 - Informar vértice manualmente")
+        print("2 - Escolher automaticamente o primeiro vértice disponível")
+        escolha = input("Opção (1 ou 2): ").strip()
+
+        if escolha == "1":
+            raiz = input("Informe o nome do vértice inicial: ").strip()
+            if raiz not in grafo_atores.vertices:
+                conteudo += f"Vértice '{raiz}' não encontrado.\n"
+                print(conteudo)
+                salvar_em_txt("saida_opcao_3.txt", conteudo)
+                return
+        elif escolha == "2":
+            if not grafo_atores.vertices:
+                conteudo += "O grafo de atores está vazio.\n"
+                print(conteudo)
+                salvar_em_txt("saida_opcao_3.txt", conteudo)
+                return
+            raiz = next(iter(grafo_atores.vertices))
+            conteudo += f"Raiz escolhida automaticamente: {raiz}\n"
+        else:
+            conteudo += "Opção inválida.\n"
+            print(conteudo)
+            salvar_em_txt("saida_opcao_3.txt", conteudo)
+            return
+
+        agm, custo = agm_prim(grafo_atores, raiz)
+        if not agm:
+            conteudo += "Não foi possível gerar a AGM. Verifique se o grafo é conexo.\n"
+        else:
+            conteudo += f"\nCusto total da AGM: {custo}\n"
+            salvar_agm_completa_em_txt(agm, raiz)
+
+    elif opcao == "4":
+        conteudo += "\n--- CENTRALIDADE DE GRAU - ATORES ---\n"
+        graus = degree_centrality(grafo_atores)
+        for v, g in sorted(graus.items(), key=lambda x: -x[1])[:10]:
+            norm = grau_normalizado(grafo_atores, v)
+            conteudo += f"{v}: {g} (normalizado: {norm:.4f})\n"
+
+    elif opcao == "5":
+        conteudo += "\n--- CENTRALIDADE DE INTERMEDIAÇÃO - ATORES ---\n"
+        centralidade = betweenness_centrality(grafo_atores)
+        for v, c in sorted(centralidade.items(), key=lambda x: -x[1])[:10]:
+            norm = betweenness_normalizado(grafo_atores, v)
+            conteudo += f"{v}: {c:.4f} (normalizado: {norm:.4f})\n"
+
+    elif opcao == "6":
+        conteudo += "\n--- CENTRALIDADE DE PROXIMIDADE - ATORES ---\n"
+        centralidade = closeness_centrality(grafo_atores)
+        for v, c in sorted(centralidade.items(), key=lambda x: -x[1])[:10]:
+            norm = closeness_normalizado(grafo_atores, v)
+            conteudo += f"{v}: {c:.4f} (normalizado: {norm:.4f})\n"
+
+    elif opcao == "7":
+        conteudo += "\n--- CENTRALIDADE DE GRAU - DIRETORES ---\n"
+        graus = degree_centrality(grafo_direcional, mode="in")
+        for v, g in sorted(graus.items(), key=lambda x: -x[1])[:10]:
+            norm = grau_normalizado(grafo_direcional, v, mode="in")
+            conteudo += f"{v}: {g} (normalizado: {norm:.4f})\n"
+
+    elif opcao == "8":
+        conteudo += "\n--- CENTRALIDADE DE INTERMEDIAÇÃO - DIRETORES ---\n"
+        centralidade = betweenness_centrality(grafo_direcional)
+        for v, c in sorted(centralidade.items(), key=lambda x: -x[1])[:10]:
+            norm = betweenness_normalizado(grafo_direcional, v)
+            conteudo += f"{v}: {c:.4f} (normalizado: {norm:.4f})\n"
+
+    elif opcao == "9":
+        conteudo += "\n--- CENTRALIDADE DE PROXIMIDADE - DIRETORES ---\n"
+        centralidade = closeness_centrality(grafo_direcional)
+        for v, c in sorted(centralidade.items(), key=lambda x: -x[1])[:10]:
+            norm = closeness_normalizado(grafo_direcional, v)
+            conteudo += f"{v}: {c:.4f} (normalizado: {norm:.4f})\n"
+
+    elif opcao == "0":
+        print("Saindo do programa... Até mais!")
+        exit()
+
+    else:
+        print("Opção inválida.\n")
+        return
+
+    # Exibir no terminal e salvar em txt
+    print(conteudo)
+    salvar_em_txt(f"saida_opcao_{opcao}.txt", conteudo)
+
+# ========== MAIN ==========
 
 def main():
     arquivo_csv = 'netflix_amazon_disney_titles.csv'
@@ -88,143 +194,7 @@ def main():
 
     while True:
         opcao = mostrar_menu()
-
-        if opcao == "1":
-            conteudo = "\n--- INFORMAÇÕES BÁSICAS DOS GRAFOS ---\n"
-            v1, a1 = grafo_atores.obter_info()
-            conteudo += f"Grafo de Atores (não direcionado): {v1} vértices, {a1} arestas\n"
-            v2, a2 = grafo_direcional.obter_info()
-            conteudo += f"Grafo Direcional (atores → diretores): {v2} vértices, {a2} arestas\n"
-            print(conteudo)
-            salvar_em_txt("saida_opcao_1.txt", conteudo)
-
-        elif opcao == "2":
-            conteudo = "\n--- COMPONENTES CONEXAS ---\n"
-            comp_nao_dir = componentes_conexas(grafo_atores)
-            conteudo += f"Grafo de Atores: {len(comp_nao_dir)} componentes conexas\n"
-            comp_dir = componentes_fortemente_conexas(grafo_direcional)
-            conteudo += f"Grafo Direcional: {len(comp_dir)} componentes fortemente conexas\n"
-            print(conteudo)
-            salvar_em_txt("saida_opcao_2.txt", conteudo)
-
-        elif opcao == "3":
-            conteudo = "\n--- ÁRVORE GERADORA MÍNIMA (PRIM) ---\n"
-            print("1 - Informar vértice manualmente")
-            print("2 - Escolher automaticamente o primeiro vértice disponível")
-            escolha = input("Opção (1 ou 2): ").strip()
-
-            if escolha == "1":
-                raiz = input("Informe o nome do vértice inicial: ").strip()
-                if raiz not in grafo_atores.vertices:
-                    conteudo += f"Vértice '{raiz}' não encontrado.\n"
-                    print(conteudo)
-                    salvar_em_txt("saida_opcao_3.txt", conteudo)
-                    input("\nPressione Enter para continuar...")
-                    continue
-            elif escolha == "2":
-                if not grafo_atores.vertices:
-                    conteudo += "O grafo de atores está vazio.\n"
-                    print(conteudo)
-                    salvar_em_txt("saida_opcao_3.txt", conteudo)
-                    input("\nPressione Enter para continuar...")
-                    continue
-                raiz = next(iter(grafo_atores.vertices))
-                conteudo += f"Raiz escolhida automaticamente: {raiz}\n"
-            else:
-                conteudo += "Opção inválida.\n"
-                print(conteudo)
-                salvar_em_txt("saida_opcao_3.txt", conteudo)
-                input("\nPressione Enter para continuar...")
-                continue
-
-            agm, custo = agm_prim(grafo_atores, raiz)
-            if not agm:
-                conteudo += "Não foi possível gerar a AGM. Verifique se o grafo é conexo.\n"
-                print(conteudo)
-                salvar_em_txt("saida_opcao_3.txt", conteudo)
-                input("\nPressione Enter para continuar...")
-                continue
-
-            conteudo += f"\nCusto total da AGM: {custo}\n"
-            print(conteudo)
-            salvar_em_txt("saida_opcao_3.txt", conteudo)
-            salvar_agm_completa_em_txt(agm, raiz)  # Isso já deve salvar a AGM em outro txt próprio.
-
-        elif opcao == "4":
-            conteudo = "\n--- CENTRALIDADE DE GRAU - ATORES (GRAFO NÃO DIRECIONADO) ---\n"
-            graus = degree_centrality(grafo_atores)
-            conteudo += "Top 10 atores/atrizes com maior grau:\n"
-            for v, g in sorted(graus.items(), key=lambda x: -x[1])[:10]:
-                norm = grau_normalizado(grafo_atores, v)
-                conteudo += f"{v}: {g} (normalizado: {norm:.4f})\n"
-            conteudo += "\n👉 A centralidade de grau indica com quantos outros atores/atrizes cada ator/atriz trabalhou diretamente.\n"
-            print(conteudo)
-            salvar_em_txt("saida_opcao_4.txt", conteudo)
-
-        elif opcao == "5":
-            conteudo = "\n--- CENTRALIDADE DE INTERMEDIAÇÃO - ATORES ---\n"
-            centralidade = betweenness_centrality(grafo_atores)
-            conteudo += "Top 10 atores/atrizes com maior intermediação:\n"
-            for v, c in sorted(centralidade.items(), key=lambda x: -x[1])[:10]:
-                norm = betweenness_normalizado(grafo_atores, v)
-                conteudo += f"{v}: {c:.4f} (normalizado: {norm:.4f})\n"
-            conteudo += "\n👉 A centralidade de intermediação mostra quais atores/atrizes são mais importantes como pontes entre outros pares da rede.\n"
-            print(conteudo)
-            salvar_em_txt("saida_opcao_5.txt", conteudo)
-
-        elif opcao == "6":
-            conteudo = "\n--- CENTRALIDADE DE PROXIMIDADE - ATORES ---\n"
-            centralidade = closeness_centrality(grafo_atores)
-            conteudo += "Top 10 atores/atrizes com maior proximidade:\n"
-            for v, c in sorted(centralidade.items(), key=lambda x: -x[1])[:10]:
-                norm = closeness_normalizado(grafo_atores, v)
-                conteudo += f"{v}: {c:.4f} (normalizado: {norm:.4f})\n"
-            conteudo += "\n👉 A centralidade de proximidade indica quais atores têm menor distância média até todos os outros.\n"
-            print(conteudo)
-            salvar_em_txt("saida_opcao_6.txt", conteudo)
-
-        elif opcao == "7":
-            conteudo = "\n--- CENTRALIDADE DE GRAU - DIRETORES (ENTRADA) ---\n"
-            graus = degree_centrality(grafo_direcional, mode="in")
-            conteudo += "Top 10 diretores com maior grau de entrada:\n"
-            for v, g in sorted(graus.items(), key=lambda x: -x[1])[:10]:
-                norm = grau_normalizado(grafo_direcional, v, mode="in")
-                conteudo += f"{v}: {g} (normalizado: {norm:.4f})\n"
-            conteudo += "\n👉 A centralidade de grau (entrada) indica quantos atores diferentes trabalharam com cada diretor.\n"
-            print(conteudo)
-            salvar_em_txt("saida_opcao_7.txt", conteudo)
-
-        elif opcao == "8":
-            conteudo = "\n--- CENTRALIDADE DE INTERMEDIAÇÃO - DIRETORES ---\n"
-            centralidade = betweenness_centrality(grafo_direcional)
-            conteudo += "Top 10 diretores com maior intermediação:\n"
-            for v, c in sorted(centralidade.items(), key=lambda x: -x[1])[:10]:
-                norm = betweenness_normalizado(grafo_direcional, v)
-                conteudo += f"{v}: {c:.4f} (normalizado: {norm:.4f})\n"
-            conteudo += "\n👉 A centralidade de intermediação no grafo direcionado indica quais diretores são mais relevantes como intermediários nos caminhos mais curtos.\n"
-            print(conteudo)
-            salvar_em_txt("saida_opcao_8.txt", conteudo)
-
-        elif opcao == "9":
-            conteudo = "\n--- CENTRALIDADE DE PROXIMIDADE - DIRETORES ---\n"
-            centralidade = closeness_centrality(grafo_direcional)
-            conteudo += "Top 10 diretores com maior proximidade:\n"
-            for v, c in sorted(centralidade.items(), key=lambda x: -x[1])[:10]:
-                norm = closeness_normalizado(grafo_direcional, v)
-                conteudo += f"{v}: {c:.4f} (normalizado: {norm:.4f})\n"
-            conteudo += "\n👉 A centralidade de proximidade mostra os diretores mais próximos de todos os outros na rede.\n"
-            print(conteudo)
-            salvar_em_txt("saida_opcao_9.txt", conteudo)
-            print("\n👉 A centralidade de proximidade indica quais diretores estão mais próximos dos outros na rede, ou seja, têm menor distância média até os atores e demais diretores.")
-        elif opcao == "0":
-            confirm = input("Tem certeza que deseja sair? (s/n): ").strip().lower()
-            if confirm == "s":
-                print("Saindo do programa... Até mais!")
-                break
-
-        else:
-            print("Opção inválida.")
-
+        executar_opcao(opcao, grafo_atores, grafo_direcional)
         input("\nPressione Enter para continuar...")
 
 if __name__ == "__main__":

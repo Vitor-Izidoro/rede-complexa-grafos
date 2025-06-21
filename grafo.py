@@ -2,77 +2,64 @@ import os
 import pandas as pd
 from collections import defaultdict
 
+# ========== LEITURA E PADRONIZAÇÃO DOS DADOS ==========
+
 def carregar_dados_padronizados(caminho_arquivo):
     """
-    Carrega e padroniza os dados do CSV, filtrando apenas linhas com 'cast' e 'director' válidos.
-    Versão otimizada com melhor tratamento de erros e performance.
+    Carrega e padroniza os dados do CSV, mantendo apenas linhas com 'cast' e 'director' válidos.
 
     Args:
         caminho_arquivo (str): Caminho para o arquivo CSV.
 
     Returns:
-        tuple: (elencos, diretores), listas de listas com atores e diretores padronizados.
-               Retorna ([], []) em caso de erro.
+        tuple: (elencos, diretores), listas de listas com nomes padronizados em maiúsculo.
     """
-    # Verificação inicial do arquivo
     if not os.path.exists(caminho_arquivo):
         print(f"Erro: Arquivo não encontrado em {caminho_arquivo}")
         return [], []
-    
+
     try:
-        # Carrega apenas as colunas necessárias para melhor performance
         df = pd.read_csv(caminho_arquivo, usecols=['cast', 'director'])
     except Exception as e:
         print(f"Erro ao ler o CSV: {e}")
         return [], []
 
-    # Pré-filtro: remove linhas com valores nulos
     df.dropna(subset=['cast', 'director'], inplace=True)
-    total_linhas = len(df)
-    
-    if total_linhas == 0:
-        print("Nenhum dado válido encontrado após filtrar valores nulos.")
+    if df.empty:
+        print("Nenhum dado válido encontrado após o filtro de nulos.")
         return [], []
 
-    # Pré-aloca listas para melhor performance
-    elencos = []
-    diretores = []
-    linhas_processadas = 0
+    elencos, diretores = [], []
+    total_linhas, linhas_processadas = len(df), 0
 
-    # Processamento em lote mais eficiente
     for elenco_raw, diretor_raw in zip(df['cast'], df['director']):
         try:
-            # Processamento do elenco
             atores = [ator.strip().upper() for ator in elenco_raw.split(',') if ator.strip()]
-            if len(atores) < 2:
-                continue
-
-            # Processamento dos diretores
             diretores_filme = [d.strip().upper() for d in diretor_raw.split(',') if d.strip()]
-            if not diretores_filme:
+
+            if len(atores) < 2 or not diretores_filme:
                 continue
 
             elencos.append(atores)
             diretores.append(diretores_filme)
             linhas_processadas += 1
-            
         except Exception as e:
             print(f"Erro ao processar linha: {e}")
-            continue
 
-    print(f"\n>>> Linhas processadas: {linhas_processadas} de {total_linhas} válidas "
-          f"({linhas_processadas/total_linhas:.1%} de aproveitamento)")
+    print(f"\n>>> Linhas processadas: {linhas_processadas}/{total_linhas} "
+          f"({linhas_processadas / total_linhas:.1%} de aproveitamento)")
 
     return elencos, diretores
 
+# ========== CLASSE GRAFO ==========
 
 class Grafo:
     """
     Estrutura de Grafo com suporte a grafos direcionados e não direcionados.
     """
     def __init__(self, direcionado=False):
-        self.lista_adj = defaultdict(list)  # Lista de adjacência
-        self.vertices = set()               # Conjunto de vértices
+        self.lista_adj = defaultdict(list)
+        self.vertices = set()
         self.direcionado = direcionado
         self.num_arestas = 0
 
@@ -82,18 +69,13 @@ class Grafo:
 
     def adicionar_aresta(self, u, v, peso=1):
         """
-        Adiciona uma aresta entre os vértices u e v.
+        Adiciona uma aresta (u, v) ao grafo.
 
-        Se o grafo for não-direcionado, adiciona a aresta nos dois sentidos.
-
-        Args:
-            u (str): Vértice de origem.
-            v (str): Vértice de destino.
-            peso (int, optional): Peso da aresta. Default é 1.
+        Para grafos não direcionados, adiciona nos dois sentidos.
         """
         self.vertices.update([u, v])
 
-        # Verifica se a aresta já existe para somar peso
+        # Se a aresta já existe, apenas incrementa o peso
         for idx, (viz, peso_atual) in enumerate(self.lista_adj[u]):
             if viz == v:
                 self.lista_adj[u][idx] = (viz, peso_atual + peso)
@@ -103,23 +85,22 @@ class Grafo:
                             self.lista_adj[v][jdx] = (viz2, peso_atual2 + peso)
                 return
 
-        # Se a aresta ainda não existe, cria
+        # Se a aresta ainda não existe, cria nova
         self.lista_adj[u].append((v, peso))
         self.num_arestas += 1
 
         if not self.direcionado:
-            # Adiciona a aresta inversa se ainda não existir
             if not any(viz == u for viz, _ in self.lista_adj[v]):
                 self.lista_adj[v].append((u, peso))
 
     def obter_info(self):
-        """Retorna o número de vértices e de arestas do grafo."""
+        """Retorna (número de vértices, número de arestas)."""
         num_vertices = len(self.vertices)
         num_arestas = self.num_arestas if self.direcionado else self.num_arestas // 2
         return num_vertices, num_arestas
 
     def __str__(self):
-        """Gera uma representação textual do grafo."""
+        """Retorna uma string com a representação do grafo."""
         tipo = "direcionado" if self.direcionado else "não direcionado"
         saida = f"Grafo {tipo}\n"
         saida += f"Vértices: {len(self.vertices)}, Arestas: {self.num_arestas if self.direcionado else self.num_arestas // 2}\n"
@@ -130,19 +111,18 @@ class Grafo:
 
         return saida
 
+# ========== CONSTRUÇÃO DOS GRAFOS ==========
 
 def construir_grafo_atores(elencos):
     """
-    Constrói um grafo não direcionado entre atores.
-
-    Cada aresta indica que os dois atores atuaram juntos,
-    e o peso representa quantas vezes essa parceria aconteceu.
+    Constrói o grafo de co-atores (não direcionado).
+    Cada aresta indica que os dois atores trabalharam juntos.
 
     Args:
-        elencos (list): Lista de elencos, onde cada elenco é uma lista de atores.
+        elencos (list): Lista de listas de atores.
 
     Returns:
-        Grafo: Grafo não direcionado dos atores.
+        Grafo: Grafo não direcionado.
     """
     grafo = Grafo(direcionado=False)
 
@@ -153,20 +133,18 @@ def construir_grafo_atores(elencos):
 
     return grafo
 
-
 def construir_grafo_direcional(elencos, diretores):
     """
-    Constrói um grafo direcionado de atores para diretores.
+    Constrói o grafo bipartido direcionado de atores → diretores.
 
-    Cada aresta indica que o ator trabalhou com aquele diretor,
-    com o peso representando a quantidade de colaborações.
+    Cada aresta indica que o ator trabalhou com o diretor.
 
     Args:
-        elencos (list): Lista de elencos (listas de atores).
-        diretores (list): Lista de diretores (listas de diretores).
+        elencos (list): Lista de listas de atores.
+        diretores (list): Lista de listas de diretores.
 
     Returns:
-        Grafo: Grafo direcionado de atores para diretores.
+        Grafo: Grafo direcionado.
     """
     grafo = Grafo(direcionado=True)
 

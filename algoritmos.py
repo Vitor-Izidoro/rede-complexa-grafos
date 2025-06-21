@@ -1,22 +1,20 @@
 from collections import deque, defaultdict
 import heapq
 
+# ========== COMPONENTES CONEXAS ==========
+
 def componentes_conexas(grafo):
     print("Calculando componentes conexas...")
     visitado = set()
     componentes = []
-
-    total = len(grafo.vertices)
-    cont = 0
+    total, cont = len(grafo.vertices), 0
 
     for v in grafo.vertices:
         cont += 1
         print(f"Componentes conexas: {cont}/{total} vértices processados...", end='\r', flush=True)
-
         if v not in visitado:
-            pilha = [v]
             componente = []
-
+            pilha = [v]
             while pilha:
                 atual = pilha.pop()
                 if atual not in visitado:
@@ -25,13 +23,11 @@ def componentes_conexas(grafo):
                     for vizinho, _ in grafo.lista_adj.get(atual, []):
                         if vizinho not in visitado:
                             pilha.append(vizinho)
-
             componentes.append(componente)
 
     print(" " * 50, end='\r')
     print(f"Componentes conexas calculadas: {len(componentes)} componentes encontradas.")
     return componentes
-
 
 def componentes_fortemente_conexas(grafo):
     print("Calculando componentes fortemente conexas...")
@@ -50,10 +46,8 @@ def componentes_fortemente_conexas(grafo):
             if viz not in visitado:
                 dfs_transposto(viz, visitado, componente, transposto)
 
-    visitado = set()
-    pilha = []
-    total = len(grafo.vertices)
-    cont = 0
+    visitado, pilha = set(), []
+    total, cont = len(grafo.vertices), 0
 
     for v in grafo.vertices:
         cont += 1
@@ -63,10 +57,10 @@ def componentes_fortemente_conexas(grafo):
 
     print(" " * 50, end='\r')
 
-    transposto = {}
+    transposto = defaultdict(list)
     for u in grafo.lista_adj:
         for v, peso in grafo.lista_adj[u]:
-            transposto.setdefault(v, []).append((u, peso))
+            transposto[v].append((u, peso))
 
     visitado.clear()
     componentes = []
@@ -80,12 +74,11 @@ def componentes_fortemente_conexas(grafo):
     print(f"Componentes fortemente conexas calculadas: {len(componentes)} componentes encontradas.")
     return componentes
 
+# ========== ÁRVORE GERADORA MÍNIMA ==========
 
 def agm_prim(grafo, inicio):
     print(f"Calculando Árvore Geradora Mínima a partir do vértice '{inicio}'...")
-    visitado = set()
-    agm = []
-    custo_total = 0
+    visitado, agm, custo_total = set(), [], 0
     fila = []
 
     visitado.add(inicio)
@@ -105,22 +98,22 @@ def agm_prim(grafo, inicio):
     print(f"AGM calculada com custo total: {custo_total}")
     return agm, custo_total
 
+# ========== CENTRALIDADE DE GRAU ==========
 
 def degree_centrality(grafo, mode="total"):
-    # print("Calculando centralidade de grau...")
     centralidade = {}
-    total = len(grafo.vertices)
-    cont = 0
+    total, cont = len(grafo.vertices), 0
 
     for v in grafo.vertices:
         cont += 1
         print(f"Centralidade de grau: {cont}/{total} vértices processados...", end='\r', flush=True)
+
         if grafo.direcionado:
             if mode == "in":
                 centralidade[v] = sum(1 for u in grafo.vertices for w, _ in grafo.lista_adj.get(u, []) if w == v)
             elif mode == "out":
                 centralidade[v] = len(grafo.lista_adj.get(v, []))
-            else:  # total (in + out)
+            else:
                 in_degree = sum(1 for u in grafo.vertices for w, _ in grafo.lista_adj.get(u, []) if w == v)
                 out_degree = len(grafo.lista_adj.get(v, []))
                 centralidade[v] = in_degree + out_degree
@@ -128,22 +121,19 @@ def degree_centrality(grafo, mode="total"):
             centralidade[v] = len(grafo.lista_adj.get(v, []))
 
     print(" " * 50, end='\r')
-    #print("Centralidade de grau calculada.")
     return centralidade
 
+# ========== CENTRALIDADE DE INTERMEDIAÇÃO ==========
 
 def betweenness_centrality(grafo):
-    #print("Calculando centralidade de intermediação (betweenness)...")
     centralidade = defaultdict(float)
-    total = len(grafo.vertices)
-    cont = 0
+    total, cont = len(grafo.vertices), 0
 
     for s in grafo.vertices:
         cont += 1
         print(f"Betweenness: {cont}/{total} vértices processados...", end='\r', flush=True)
 
-        S = []
-        P = defaultdict(list)
+        S, P = [], defaultdict(list)
         sigma = dict.fromkeys(grafo.vertices, 0)
         d = dict.fromkeys(grafo.vertices, -1)
         sigma[s], d[s] = 1, 0
@@ -172,15 +162,13 @@ def betweenness_centrality(grafo):
     print(" " * 50, end='\r')
     for v in centralidade:
         centralidade[v] /= 2
-    #print("Centralidade de intermediação calculada.")
     return dict(centralidade)
 
+# ========== CENTRALIDADE DE PROXIMIDADE ==========
 
 def closeness_centrality(grafo):
-    #print("Calculando centralidade de proximidade...")
     centralidade = {}
-    total = len(grafo.vertices)
-    cont = 0
+    total, cont = len(grafo.vertices), 0
 
     for v in grafo.vertices:
         cont += 1
@@ -202,11 +190,11 @@ def closeness_centrality(grafo):
             centralidade[v] = 0
 
     print(" " * 50, end='\r')
-    #print("Centralidade de proximidade calculada.")
     return centralidade
 
+# ========== CENTRALIDADES NORMALIZADAS ==========
+
 def grau_normalizado(grafo, vertice, mode="total"):
-    """Retorna a centralidade de grau normalizada (0 a 1) de um vértice."""
     graus = degree_centrality(grafo, mode)
     n = len(grafo.vertices)
     if n <= 1 or vertice not in graus:
@@ -214,18 +202,13 @@ def grau_normalizado(grafo, vertice, mode="total"):
     return graus[vertice] / (n - 1)
 
 def betweenness_normalizado(grafo, vertice):
-    """Retorna a centralidade de intermediação normalizada (0 a 1) de um vértice."""
     centralidade = betweenness_centrality(grafo)
     n = len(grafo.vertices)
     if n <= 2 or vertice not in centralidade:
         return 0.0
-    if grafo.direcionado:
-        norm = 1 / ((n - 1) * (n - 2))
-    else:
-        norm = 2 / ((n - 1) * (n - 2))
+    norm = (1 / ((n - 1) * (n - 2))) if grafo.direcionado else (2 / ((n - 1) * (n - 2)))
     return centralidade[vertice] * norm
 
 def closeness_normalizado(grafo, vertice):
-    """Retorna a centralidade de proximidade normalizada (0 a 1) de um vértice."""
     centralidade = closeness_centrality(grafo)
     return centralidade.get(vertice, 0.0)
