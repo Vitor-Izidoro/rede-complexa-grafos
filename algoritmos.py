@@ -159,16 +159,16 @@ def betweenness_centrality(grafo):
         centralidade[v] /= 2
     print("Centralidade de intermediação calculada.")
     return dict(centralidade)
+def closeness_centrality(grafo, vertices=None):
+    from collections import deque
 
-
-def closeness_centrality(grafo):
     print("Calculando centralidade de proximidade...")
     centralidade = {}
-    total = len(grafo.vertices)
-    cont = 0
-    for v in grafo.vertices:
-        cont += 1
-        print(f"Centralidade de proximidade: {cont}/{total} vértices processados...", end='\r', flush=True)
+    vertices = vertices or grafo.vertices  # permite calcular para subconjuntos, como a maior componente
+    total = len(vertices)
+
+    for idx, v in enumerate(vertices):
+        print(f"Centralidade de proximidade: {idx+1}/{total} vértices processados...", end='\r', flush=True)
 
         dist = {v: 0}
         fila = deque([v])
@@ -178,10 +178,14 @@ def closeness_centrality(grafo):
                 if w not in dist:
                     dist[w] = dist[u] + 1
                     fila.append(w)
-        if len(dist) > 1:
-            centralidade[v] = (len(dist) - 1) / sum(dist.values())
+
+        alcançados = len(dist) - 1
+        if alcançados > 0:
+            soma = sum(dist.values())
+            centralidade[v] = alcançados / soma
         else:
             centralidade[v] = 0
-    print(" " * 50, end='\r')  # limpa a linha
+
+    print(" " * 50, end='\r')
     print("Centralidade de proximidade calculada.")
     return centralidade

@@ -8,6 +8,7 @@ from algoritmos import (
     closeness_centrality
 )
 import os
+import random
 
 def mostrar_menu():
     print("\n===== ANÁLISE DE REDES COMPLEXAS =====")
@@ -17,8 +18,6 @@ def mostrar_menu():
     print("4. Centralidade de Grau")
     print("5. Centralidade de Intermediação")
     print("6. Centralidade de Proximidade")
-    print("7. Top 10 diretores por centralidade de intermediação (grafo direcionado)")
-    print("8. Top 10 diretores por centralidade de proximidade (grafo direcionado)")
     print("0. Sair")
     print("======================================")
     return input("Escolha uma opção: ").strip()
@@ -112,30 +111,18 @@ def main():
 
         elif opcao == "6":
             print("\n--- CENTRALIDADE DE PROXIMIDADE (CLOSENESS) ---")
-            centralidade = closeness_centrality(grafo_atores)
-            print("Top 10 vértices por proximidade:")
-            for v, c in sorted(centralidade.items(), key=lambda x: -x[1])[:10]:
+            
+            componentes = componentes_conexas(grafo_atores)
+            maior_componente = max(componentes, key=len)
+            amostra = random.sample(list(maior_componente), 100)
+
+
+            centralidade = closeness_centrality(grafo_atores, vertices=maior_componente)
+
+            print("Top 10 vértices por proximidade (entre 100 amostrados):")
+            top10 = sorted(centralidade.items(), key=lambda x: -x[1])[:10]
+            for v, c in top10:
                 print(f"{v}: {c:.4f}")
-
-        elif opcao == "7":
-            print("\n--- TOP 10 DIRETORES POR CENTRALIDADE DE INTERMEDIAÇÃO (GRAFO DIRECIONADO) ---")
-            todos_diretores = set(d for sublist in diretores for d in sublist)
-            centralidade_betw = betweenness_centrality(grafo_direcional)
-            diretores_betw = {d: centralidade_betw[d] for d in todos_diretores if d in centralidade_betw}
-            top10_betw = sorted(diretores_betw.items(), key=lambda x: -x[1])[:10]
-            for d, c in top10_betw:
-                print(f"{d}: {c:.4f}")
-            print("\nEssa métrica indica quantas vezes o diretor está nos caminhos mais curtos entre outros pares de vértices. Diretores com alta centralidade de intermediação são pontes importantes na rede, conectando diferentes grupos de atores.")
-
-        elif opcao == "8":
-            print("\n--- TOP 10 DIRETORES POR CENTRALIDADE DE PROXIMIDADE (GRAFO DIRECIONADO) ---")
-            todos_diretores = set(d for sublist in diretores for d in sublist)
-            centralidade_close = closeness_centrality(grafo_direcional)
-            diretores_close = {d: centralidade_close[d] for d in todos_diretores if d in centralidade_close}
-            top10_close = sorted(diretores_close.items(), key=lambda x: -x[1])[:10]
-            for d, c in top10_close:
-                print(f"{d}: {c:.4f}")
-            print("\nEssa métrica indica o quão próximo o diretor está de todos os outros vértices do grafo. Diretores com alta centralidade de proximidade podem ser alcançados rapidamente por muitos atores, tendo acesso rápido à rede.")
 
         elif opcao == "0":
             confirm = input("Tem certeza que deseja sair? (s/n): ").strip().lower()
