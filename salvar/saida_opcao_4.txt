@@ -1,0 +1,12 @@
+
+--- CENTRALIDADE DE GRAU - ATORES ---
+ANUPAM KHER: 367 (normalizado: 0.0076)
+DANNY TREJO: 270 (normalizado: 0.0056)
+AMITABH BACHCHAN: 256 (normalizado: 0.0053)
+PARESH RAWAL: 250 (normalizado: 0.0052)
+JOHN GOODMAN: 247 (normalizado: 0.0051)
+MORGAN FREEMAN: 247 (normalizado: 0.0051)
+SAMUEL L. JACKSON: 242 (normalizado: 0.0050)
+PAUL GIAMATTI: 229 (normalizado: 0.0048)
+FRED ARMISEN: 227 (normalizado: 0.0047)
+SHAH RUKH KHAN: 225 (normalizado: 0.0047)

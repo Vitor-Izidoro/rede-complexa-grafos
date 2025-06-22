@@ -1,4 +1,3 @@
 
---- INFORMAÇÕES BÁSICAS DOS GRAFOS ---
-Grafo de Atores: 48119 vértices, 358514 arestas
-Grafo Direcional: 57609 vértices, 90033 arestas
+--- INFORMAÇÕES BÁSICAS DO GRAFO ---
+Grafo de diretores: 8525 vértices, 124641 arestas

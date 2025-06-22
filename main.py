@@ -1,10 +1,9 @@
 import os
 import platform
 from collections import defaultdict
-from grafo import carregar_dados_padronizados, construir_grafo_atores, construir_grafo_direcional
+from grafo import carregar_dados_padronizados, construir_grafo_participantes
 from algoritmos import (
     componentes_conexas,
-    componentes_fortemente_conexas,
     agm_prim,
     degree_centrality,
     betweenness_centrality,
@@ -50,60 +49,51 @@ def salvar_agm_completa_em_txt(agm, raiz):
 
 # ========== MENU E EXECUÇÃO DE OPÇÕES ==========
 
-def mostrar_menu():
+def mostrar_menu(tipo_grafo):
     print("""
 ===== ANÁLISE DE REDES COMPLEXAS =====
-1. Informações básicas dos grafos
+1. Informações básicas do grafo
 2. Componentes conexas
-3. Árvore Geradora Mínima (grafo atores)
-4. Centralidade de Grau - Atores (não direcionado)
-5. Centralidade de Intermediação - Atores (não direcionado)
-6. Centralidade de Proximidade - Atores (não direcionado)
-7. Centralidade de Grau - Diretores (grafo direcionado)
-8. Centralidade de Intermediação - Diretores (grafo direcionado)
-9. Centralidade de Proximidade - Diretores (grafo direcionado)
-0. Sair
-======================================
-""")
+""" + ("3. Árvore Geradora Mínima (apenas para atores)\n" if tipo_grafo == 'atores' else "") +
+    ("4. Centralidade de Grau\n" if tipo_grafo != 'direcional' else "4. Centralidade de Grau (in/out)\n") +
+    "3. Centralidade de Intermediação\n" +
+    "6. Centralidade de Proximidade\n" +
+    "0. Sair\n======================================\n")
     return input("Escolha uma opção: ").strip()
 
-def executar_opcao(opcao, grafo_atores, grafo_direcional):
+def executar_opcao(opcao, grafo, tipo_grafo):
     conteudo = ""
 
     if opcao == "1":
-        v1, a1 = grafo_atores.obter_info()
-        v2, a2 = grafo_direcional.obter_info()
-        conteudo += f"\n--- INFORMAÇÕES BÁSICAS DOS GRAFOS ---\n"
-        conteudo += f"Grafo de Atores: {v1} vértices, {a1} arestas\n"
-        conteudo += f"Grafo Direcional: {v2} vértices, {a2} arestas\n"
+        v, a = grafo.obter_info()
+        conteudo += f"\n--- INFORMAÇÕES BÁSICAS DO GRAFO ---\n"
+        conteudo += f"Grafo de {tipo_grafo}: {v} vértices, {a} arestas\n"
 
     elif opcao == "2":
-        comp_nao_dir = componentes_conexas(grafo_atores)
-        comp_dir = componentes_fortemente_conexas(grafo_direcional)
+        comp = componentes_conexas(grafo)
         conteudo += f"\n--- COMPONENTES CONEXAS ---\n"
-        conteudo += f"Grafo de Atores: {len(comp_nao_dir)} componentes conexas\n"
-        conteudo += f"Grafo Direcional: {len(comp_dir)} componentes fortemente conexas\n"
+        conteudo += f"Grafo de {tipo_grafo}: {len(comp)} componentes conexas\n"
 
-    elif opcao == "3":
+    elif opcao == "3" and tipo_grafo == 'atores':
         conteudo += "\n--- ÁRVORE GERADORA MÍNIMA (PRIM) ---\n"
         print("1 - Informar vértice manualmente")
         print("2 - Escolher automaticamente o primeiro vértice disponível")
         escolha = input("Opção (1 ou 2): ").strip()
 
         if escolha == "1":
-            raiz = input("Informe o nome do vértice inicial: ").strip()
-            if raiz not in grafo_atores.vertices:
+            raiz = input("Informe o nome do vértice inicial: ").strip().upper()
+            if raiz not in grafo.vertices:
                 conteudo += f"Vértice '{raiz}' não encontrado.\n"
                 print(conteudo)
                 salvar_em_txt("saida_opcao_3.txt", conteudo)
                 return
         elif escolha == "2":
-            if not grafo_atores.vertices:
-                conteudo += "O grafo de atores está vazio.\n"
+            if not grafo.vertices:
+                conteudo += "O grafo está vazio.\n"
                 print(conteudo)
                 salvar_em_txt("saida_opcao_3.txt", conteudo)
                 return
-            raiz = next(iter(grafo_atores.vertices))
+            raiz = next(iter(grafo.vertices))
             conteudo += f"Raiz escolhida automaticamente: {raiz}\n"
         else:
             conteudo += "Opção inválida.\n"
@@ -111,7 +101,7 @@ def executar_opcao(opcao, grafo_atores, grafo_direcional):
             salvar_em_txt("saida_opcao_3.txt", conteudo)
             return
 
-        agm, custo = agm_prim(grafo_atores, raiz)
+        agm, custo = agm_prim(grafo, raiz)
         if not agm:
             conteudo += "Não foi possível gerar a AGM. Verifique se o grafo é conexo.\n"
         else:
@@ -119,22 +109,32 @@ def executar_opcao(opcao, grafo_atores, grafo_direcional):
             salvar_agm_completa_em_txt(agm, raiz)
 
     elif opcao == "4":
-        conteudo += "\n--- CENTRALIDADE DE GRAU - ATORES ---\n"
-        graus = degree_centrality(grafo_atores, normalizar=True)
-        for v, (g, norm) in sorted(graus.items(), key=lambda x: -x[1][0])[:10]:
-            conteudo += f"{v}: {g} (normalizado: {norm:.4f})\n"
+        conteudo += f"\n--- CENTRALIDADE DE GRAU - {tipo_grafo.upper()} ---\n"
+        if tipo_grafo == 'direcional':
+            graus_in = degree_centrality(grafo, mode="in", normalizar=True)
+            graus_out = degree_centrality(grafo, mode="out", normalizar=True)
+            conteudo += "Top 10 por grau de entrada (in):\n"
+            for v, (g, norm) in sorted(graus_in.items(), key=lambda x: -x[1][0])[:10]:
+                conteudo += f"{v}: {g} (normalizado: {norm:.4f})\n"
+            conteudo += "\nTop 10 por grau de saída (out):\n"
+            for v, (g, norm) in sorted(graus_out.items(), key=lambda x: -x[1][0])[:10]:
+                conteudo += f"{v}: {g} (normalizado: {norm:.4f})\n"
+        else:
+            graus = degree_centrality(grafo, normalizar=True)
+            for v, (g, norm) in sorted(graus.items(), key=lambda x: -x[1][0])[:10]:
+                conteudo += f"{v}: {g} (normalizado: {norm:.4f})\n"
 
     elif opcao == "5":
-        conteudo += "\n--- CENTRALIDADE DE INTERMEDIAÇÃO - ATORES ---\n"
-        centralidade = betweenness_centrality(grafo_atores, normalizar=True)
+        conteudo += f"\n--- CENTRALIDADE DE INTERMEDIAÇÃO - {tipo_grafo.upper()} ---\n"
+        centralidade = betweenness_centrality(grafo, normalizar=True)
         for v, (c, norm) in sorted(centralidade.items(), key=lambda x: -x[1][0])[:10]:
             conteudo += f"{v}: {c:.4f} (normalizado: {norm:.4f})\n"
 
     elif opcao == "6":
-        print("\n--- CENTRALIDADE DE PROXIMIDADE (CLOSENESS) ---")
-        componentes = componentes_conexas(grafo_atores)
+        print(f"\n--- CENTRALIDADE DE PROXIMIDADE (CLOSENESS) - {tipo_grafo.upper()} ---")
+        componentes = componentes_conexas(grafo)
         maior_componente = max(componentes, key=len)
-        centralidade = closeness_centrality(grafo_atores, vertices=maior_componente)
+        centralidade = closeness_centrality(grafo, vertices=maior_componente)
         print("Top 10 vértices por proximidade:")
         def get_val(x):
             if isinstance(x, tuple):
@@ -150,25 +150,6 @@ def executar_opcao(opcao, grafo_atores, grafo_direcional):
             else:
                 print(f"{v}: {c:.4f}")
 
-    elif opcao == "7":
-        conteudo += "\n--- CENTRALIDADE DE GRAU - DIRETORES ---\n"
-        graus = degree_centrality(grafo_direcional, mode="in", normalizar=True)
-        for v, (g, norm) in sorted(graus.items(), key=lambda x: -x[1][0])[:10]:
-            conteudo += f"{v}: {g} (normalizado: {norm:.4f})\n"
-
-    elif opcao == "8":
-        conteudo += "\n--- CENTRALIDADE DE INTERMEDIAÇÃO - DIRETORES ---\n"
-        centralidade = betweenness_centrality(grafo_direcional, normalizar=True)
-        for v, (c, norm) in sorted(centralidade.items(), key=lambda x: -x[1][0])[:10]:
-            conteudo += f"{v}: {c:.4f} (normalizado: {norm:.4f})\n"
-
-    elif opcao == "9":
-        conteudo += "\n--- CENTRALIDADE DE PROXIMIDADE - DIRETORES ---\n"
-        centralidade = closeness_centrality(grafo_direcional, normalizar=True)
-        for v, (c, norm) in sorted(centralidade.items(), key=lambda x: -x[1][0])[:10]:
-            conteudo += f"{v}: {c:.4f} (normalizado: {norm:.4f})\n"
-
-
     elif opcao == "0":
         print("Saindo do programa... Até mais!")
         exit()
@@ -177,9 +158,9 @@ def executar_opcao(opcao, grafo_atores, grafo_direcional):
         print("Opção inválida.\n")
         return
 
-    # Exibir no terminal e salvar em txt
-    print(conteudo)
-    salvar_em_txt(f"saida_opcao_{opcao}.txt", conteudo)
+    if conteudo:
+        print(conteudo)
+        salvar_em_txt(f"saida_opcao_{opcao}.txt", conteudo)
 
 # ========== MAIN ==========
 
@@ -193,14 +174,31 @@ def main():
     print("Carregando dados do arquivo...")
     elencos, diretores = carregar_dados_padronizados(arquivo_csv)
 
-    print("Construindo grafos...")
-    grafo_atores = construir_grafo_atores(elencos)
-    grafo_direcional = construir_grafo_direcional(elencos, diretores)
-    print("Grafos criados com sucesso!")
+    print("Escolha o tipo de grafo para análise:")
+    print("1 - Grafo de atores (não direcionado)")
+    print("2 - Grafo de diretores (não direcionado, ligação por atores em comum)")
+    print("3 - Grafo direcionado (atores → diretores)")
+    escolha = input("Opção (1, 2 ou 3): ").strip()
+
+    if escolha == "1":
+        tipo_grafo = 'atores'
+        grafo = construir_grafo_participantes(elencos, diretores, tipo=tipo_grafo)
+    elif escolha == "2":
+        tipo_grafo = 'diretores'
+        grafo = construir_grafo_participantes(elencos, diretores, tipo=tipo_grafo)
+    elif escolha == "3":
+        tipo_grafo = 'direcional'
+        from grafo import construir_grafo_direcional
+        grafo = construir_grafo_direcional(elencos, diretores)
+    else:
+        print("Opção inválida. Encerrando.")
+        return
+
+    print(f"Grafo de {tipo_grafo} criado com sucesso!")
 
     while True:
-        opcao = mostrar_menu()
-        executar_opcao(opcao, grafo_atores, grafo_direcional)
+        opcao = mostrar_menu(tipo_grafo)
+        executar_opcao(opcao, grafo, tipo_grafo)
         input("\nPressione Enter para continuar...")
 
 if __name__ == "__main__":

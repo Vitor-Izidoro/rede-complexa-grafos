@@ -33,7 +33,8 @@ def carregar_dados_padronizados(caminho_arquivo):
         if len(atores) == 0:
             continue  # Ignora se não houver nenhum ator
 
-        # Padronizar nomes dos diretores
+        # Padronizar nomes dos diretores,
+        
         diretores_padronizados = [d.strip().upper() for d in diretor_raw.split(',') if d.strip()]
         # Não exige mais diretores obrigatórios
 
@@ -111,48 +112,49 @@ class Grafo:
         return saida
 
 
-def construir_grafo_atores(elencos):
+def construir_grafo_participantes(elencos, diretores, tipo='atores'):
     """
-    Constrói um grafo não direcionado entre atores.
-
-    Cada aresta indica que os dois atores atuaram juntos,
-    e o peso representa quantas vezes essa parceria aconteceu.
-
-    Args:
-        elencos (list): Lista de elencos, onde cada elenco é uma lista de atores.
-
-    Returns:
-        Grafo: Grafo não direcionado dos atores.
+    Constrói um grafo não direcionado entre atores ou entre diretores.
+    - tipo='atores': grafo de atores (vértices = atores, arestas = atuaram juntos)
+    - tipo='diretores': grafo de diretores (vértices = diretores, arestas = dirigiram o mesmo ator)
     """
     grafo = Grafo(direcionado=False)
-
-    for elenco in elencos:
-        for i in range(len(elenco)):
-            for j in range(i + 1, len(elenco)):
-                grafo.adicionar_aresta(elenco[i], elenco[j], 1)
-
+    if tipo == 'atores':
+        for elenco in elencos:
+            for i in range(len(elenco)):
+                for j in range(i + 1, len(elenco)):
+                    grafo.adicionar_aresta(elenco[i], elenco[j], 1)
+    elif tipo == 'diretores':
+        from collections import defaultdict
+        ator_para_diretores = defaultdict(set)
+        for elenco, diretores_filme in zip(elencos, diretores):
+            for ator in elenco:
+                for diretor in diretores_filme:
+                    ator_para_diretores[ator].add(diretor)
+        for diretores_set in ator_para_diretores.values():
+            diretores_list = list(diretores_set)
+            for i in range(len(diretores_list)):
+                for j in range(i + 1, len(diretores_list)):
+                    grafo.adicionar_aresta(diretores_list[i], diretores_list[j], 1)
+    else:
+        raise ValueError("Tipo deve ser 'atores' ou 'diretores'")
     return grafo
-
 
 def construir_grafo_direcional(elencos, diretores):
     """
     Constrói um grafo direcionado de atores para diretores.
-
-    Cada aresta indica que o ator trabalhou com aquele diretor,
-    com o peso representando a quantidade de colaborações.
-
-    Args:
-        elencos (list): Lista de elencos (listas de atores).
-        diretores (list): Lista de diretores (listas de diretores).
-
-    Returns:
-        Grafo: Grafo direcionado de atores para diretores.
+    Vértices: atores e diretores.
+    Arestas: de cada ator para cada diretor do mesmo filme.
     """
     grafo = Grafo(direcionado=True)
-
     for elenco, diretores_filme in zip(elencos, diretores):
         for ator in elenco:
             for diretor in diretores_filme:
                 grafo.adicionar_aresta(ator, diretor, 1)
-
     return grafo
+
+# Exemplo de uso:
+# grafo_atores = construir_grafo_participantes(elencos, diretores, tipo='atores')
+# grafo_diretores = construir_grafo_participantes(elencos, diretores, tipo='diretores')
+# grafo_direcional = construir_grafo_direcional(elencos, diretores)
+
