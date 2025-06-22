@@ -168,25 +168,30 @@ def betweenness_centrality(grafo, normalizar=False):
         centralidade[v] /= 2
 
     resultado = {}
+    # ...existing code...
     for v, valor in centralidade.items():
         if normalizar and n > 2:
-            norm = (1 / ((n - 1) * (n - 2))) if grafo.direcionado else (2 / ((n - 1) * (n - 2)))
-            resultado[v] = (valor, valor * norm)
+            if grafo.direcionado:
+                norm = valor / ((n - 1) * (n - 2))
+            else:
+                norm = valor / ((n - 1) * (n - 2) / 2)
+            resultado[v] = (valor, norm)
         else:
             resultado[v] = (valor, valor)
 
     return resultado
 
 
-def closeness_centrality(grafo, normalizar=False):
+def closeness_centrality(grafo, normalizar=False, vertices=None):
+    from collections import deque
     centralidade = {}
-    total, cont = len(grafo.vertices), 0
     n = len(grafo.vertices)
+    if vertices is None:
+        vertices = grafo.vertices
+    total = len(vertices)
 
-    for v in grafo.vertices:
-        cont += 1
-        print(f"Centralidade de proximidade: {cont}/{total} vértices processados...", end='\r', flush=True)
-
+    for idx, v in enumerate(vertices):
+        print(f"Centralidade de proximidade: {idx+1}/{total} vértices processados...", end='\r', flush=True)
         dist = {v: 0}
         fila = deque([v])
 
@@ -202,15 +207,12 @@ def closeness_centrality(grafo, normalizar=False):
 
         if reachable > 0 and total_dist > 0:
             valor = reachable / total_dist
-            if normalizar and n > 1:
-                norm = valor * (n - 1)
-            else:
-                norm = valor
+            norm = valor  # já normalizado
         else:
             valor = 0.0
             norm = 0.0
-
         centralidade[v] = (valor, norm)
+
 
     print(" " * 50, end='\r')
     return centralidade

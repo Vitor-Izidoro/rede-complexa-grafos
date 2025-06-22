@@ -19,35 +19,40 @@ def carregar_dados_padronizados(caminho_arquivo):
         return [], []
 
     try:
-        df = pd.read_csv(caminho_arquivo, usecols=['cast', 'director'])
+        df = pd.read_csv(caminho_arquivo)
     except Exception as e:
         print(f"Erro ao ler o CSV: {e}")
         return [], []
+    
+    df = df[df['cast'].notnull() & df['director'].notnull()]
 
     df.dropna(subset=['cast', 'director'], inplace=True)
     if df.empty:
         print("Nenhum dado válido encontrado após o filtro de nulos.")
         return [], []
 
+    total_linhas = len(df)
+    linhas_processadas = 0
     elencos, diretores = [], []
-    total_linhas, linhas_processadas = len(df), 0
 
-    for elenco_raw, diretor_raw in zip(df['cast'], df['director']):
-        try:
-            atores = [ator.strip().upper() for ator in elenco_raw.split(',') if ator.strip()]
-            diretores_filme = [d.strip().upper() for d in diretor_raw.split(',') if d.strip()]
+    for _, linha in df.iterrows():
+        elenco_raw = linha['cast']
+        diretor_raw = linha['director']
 
-            if len(atores) < 2 or not diretores_filme:
-                continue
+        # Padronizar nomes dos atores
+        atores = [ator.strip().upper() for ator in elenco_raw.split(',') if ator.strip()]
+        if len(atores) == 0:
+            continue  # Ignora se não houver nenhum ator
 
-            elencos.append(atores)
-            diretores.append(diretores_filme)
-            linhas_processadas += 1
-        except Exception as e:
-            print(f"Erro ao processar linha: {e}")
+        # Padronizar nomes dos diretores
+        diretores_padronizados = [d.strip().upper() for d in diretor_raw.split(',') if d.strip()]
+        # Não exige mais diretores obrigatórios
 
-    print(f"\n>>> Linhas processadas: {linhas_processadas}/{total_linhas} "
-          f"({linhas_processadas / total_linhas:.1%} de aproveitamento)")
+        elencos.append(atores)
+        diretores.append(diretores_padronizados)
+        linhas_processadas += 1
+
+    print(f"\n>>> Linhas processadas: {linhas_processadas} de {total_linhas} válidas.")
 
     return elencos, diretores
 

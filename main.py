@@ -132,9 +132,26 @@ def executar_opcao(opcao, grafo_atores, grafo_direcional):
 
     elif opcao == "6":
         conteudo += "\n--- CENTRALIDADE DE PROXIMIDADE - ATORES ---\n"
+        componentes = componentes_conexas(grafo_atores)
+        maior_componente = max(componentes, key=len)
         centralidade = closeness_centrality(grafo_atores, normalizar=True)
-        for v, (c, norm) in sorted(centralidade.items(), key=lambda x: -x[1][0])[:10]:
-            conteudo += f"{v}: {c:.4f} (normalizado: {norm:.4f})\n"
+
+        def get_val(x):
+            if isinstance(x, tuple):
+                return x[0]
+            return x
+
+        top10 = sorted(centralidade.items(), key=lambda x: -get_val(x[1]))[:10]
+
+        conteudo += "Top 10 vértices por proximidade:\n"
+        for v, c in top10:
+            if isinstance(c, tuple):
+                if len(c) > 1:
+                    conteudo += f"{v}: {c[0]:.4f} (normalizado: {c[1]:.4f})\n"
+                else:
+                    conteudo += f"{v}: {c[0]:.4f}\n"
+            else:
+                conteudo += f"{v}: {c:.4f}\n"
 
     elif opcao == "7":
         conteudo += "\n--- CENTRALIDADE DE GRAU - DIRETORES ---\n"
@@ -151,9 +168,11 @@ def executar_opcao(opcao, grafo_atores, grafo_direcional):
     elif opcao == "9":
         conteudo += "\n--- CENTRALIDADE DE PROXIMIDADE - DIRETORES ---\n"
         centralidade = closeness_centrality(grafo_direcional, normalizar=True)
-        for v, (c, norm) in sorted(centralidade.items(), key=lambda x: -x[1][0])[:10]:
-            conteudo += f"{v}: {c:.4f} (normalizado: {norm:.4f})\n"
+        top10 = sorted(centralidade.items(), key=lambda x: -x[1][1])[:10]  # Ordena pelo valor normalizado
 
+        conteudo += "Top 10 vértices por proximidade:\n"
+        for v, (c, norm) in top10:
+            conteudo += f"{v}: {c:.4f} (normalizado: {norm:.4f})\n"
 
     elif opcao == "0":
         print("Saindo do programa... Até mais!")
