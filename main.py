@@ -136,9 +136,19 @@ def executar_opcao(opcao, grafo_atores, grafo_direcional):
         maior_componente = max(componentes, key=len)
         centralidade = closeness_centrality(grafo_atores, vertices=maior_componente)
         print("Top 10 vértices por proximidade:")
-        top10 = sorted(centralidade.items(), key=lambda x: -x[1])[:10]
+        def get_val(x):
+            if isinstance(x, tuple):
+                return x[0]
+            return x
+        top10 = sorted(centralidade.items(), key=lambda x: -get_val(x[1]))[:10]
         for v, c in top10:
-            print(f"{v}: {c:.4f}")
+            if isinstance(c, tuple):
+                if len(c) > 1:
+                    print(f"{v}: {c[0]:.4f} (normalizado: {c[1]:.4f})")
+                else:
+                    print(f"{v}: {c[0]:.4f}")
+            else:
+                print(f"{v}: {c:.4f}")
 
     elif opcao == "7":
         conteudo += "\n--- CENTRALIDADE DE GRAU - DIRETORES ---\n"

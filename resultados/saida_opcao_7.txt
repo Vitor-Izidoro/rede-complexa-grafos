@@ -1,0 +1,12 @@
+
+--- CENTRALIDADE DE GRAU - DIRETORES ---
+MARTIN SCORSESE: 121 (normalizado: 0.0021)
+STEVEN SPIELBERG: 120 (normalizado: 0.0021)
+JOSEPH KANE: 112 (normalizado: 0.0019)
+DON MICHAEL PAUL: 103 (normalizado: 0.0018)
+ROBERT RODRIGUEZ: 91 (normalizado: 0.0016)
+DIBAKAR BANERJEE: 91 (normalizado: 0.0016)
+STEVE BRILL: 91 (normalizado: 0.0016)
+CATHY GARCIA-MOLINA: 90 (normalizado: 0.0016)
+PAUL HOEN: 89 (normalizado: 0.0015)
+RON HOWARD: 84 (normalizado: 0.0015)

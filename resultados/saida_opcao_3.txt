@@ -1,5 +1,5 @@
 
 --- ÁRVORE GERADORA MÍNIMA (PRIM) ---
-Raiz escolhida automaticamente: HARRY CAREY JR.
+Raiz escolhida automaticamente: PETER KOWANKO
 
 Custo total da AGM: 38738
